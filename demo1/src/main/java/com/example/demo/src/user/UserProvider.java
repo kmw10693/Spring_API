@@ -2,7 +2,10 @@ package com.example.demo.src.user;
 
 import com.example.demo.config.BaseException;
 import com.example.demo.config.secret.Secret;
-import com.example.demo.src.user.model.*;
+import com.example.demo.src.user.model.GetRes.*;
+import com.example.demo.src.user.model.PostReq.PostLoginReq;
+import com.example.demo.src.user.model.PostRes.PostLoginRes;
+import com.example.demo.src.user.model.User.User;
 import com.example.demo.utils.AES128;
 import com.example.demo.utils.JwtService;
 import org.slf4j.Logger;
@@ -65,10 +68,10 @@ public class UserProvider {
 
         if (postLoginReq.getPassword().equals(password)) { //비말번호가 일치한다면 userIdx를 가져온다.
             int userIdx = userDao.getPwd(postLoginReq).getUserIdx();
-            return new PostLoginRes(userIdx);
+            //return new PostLoginRes(userIdx);
 //  *********** 해당 부분은 7주차 - JWT 수업 후 주석해제 및 대체해주세요!  **************** //
-//            String jwt = jwtService.createJwt(userIdx);
-//            return new PostLoginRes(userIdx,jwt);
+            String jwt = jwtService.createJwt(userIdx);
+            return new PostLoginRes(userIdx,jwt);
 //  **************************************************************************
 
         } else { // 비밀번호가 다르다면 에러메세지를 출력한다.
@@ -94,6 +97,17 @@ public class UserProvider {
         } catch (Exception exception) {
             throw new BaseException(DATABASE_ERROR);
         }
+    }
+
+    // User의 주문내역을 조회
+    public List<GetOrderRes> getOrders(int page) throws BaseException {
+        try {
+            List<GetOrderRes> getUserRes = userDao.getOrders(page);
+            return getUserRes;
+        } catch (Exception exception){
+            throw new BaseException(DATABASE_ERROR);
+        }
+
     }
 
     // 해당 nickname을 갖는 User들의 정보 조회
@@ -136,10 +150,50 @@ public class UserProvider {
         }
     }
 
+    // 해당 basketIdx를 갖는 user의 장바구니 정보 조회
+    public GetBasketRes getBasket(int basketIdx) throws BaseException {
+        try {
+            GetBasketRes getUserRes = userDao.getBasket(basketIdx);
+            return getUserRes;
+        } catch (Exception exception) {
+            throw new BaseException(DATABASE_ERROR);
+        }
+    }
+
+    // 해당 userIdx를 갖는 store의 포인트 정보 조회
+    public GetStoreRes getStore(int storeIdx) throws BaseException {
+        try {
+            GetStoreRes getUserRes = userDao.getStore(storeIdx);
+            return getUserRes;
+        } catch (Exception exception) {
+            throw new BaseException(DATABASE_ERROR);
+        }
+    }
+
     // User들의 포인트 정보를 조회
     public List<GetPointRes> getPoints() throws BaseException {
         try {
             List<GetPointRes> getUserRes = userDao.getPoints();
+            return getUserRes;
+        } catch (Exception exception) {
+            throw new BaseException(DATABASE_ERROR);
+        }
+    }
+
+    // 가게 카테고리 조회
+    public List<GetCategoryRes> getCategory() throws BaseException {
+        try {
+            List<GetCategoryRes> getUserRes = userDao.getCategory();
+            return getUserRes;
+        } catch (Exception exception) {
+            throw new BaseException(DATABASE_ERROR);
+        }
+    }
+    // 가게들의 정보를 조회
+    public List<GetStoreRes> getStores() throws BaseException {
+        try {
+
+            List<GetStoreRes> getUserRes = userDao.getStore();
             return getUserRes;
         } catch (Exception exception) {
             throw new BaseException(DATABASE_ERROR);

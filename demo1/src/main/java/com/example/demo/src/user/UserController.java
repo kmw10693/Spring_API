@@ -1,16 +1,24 @@
 package com.example.demo.src.user;
 
+import com.example.demo.src.user.model.GetRes.*;
+import com.example.demo.src.user.model.PatchReq.*;
+import com.example.demo.src.user.model.PostReq.PostBasketReq;
+import com.example.demo.src.user.model.PostReq.PostCategoryReq;
+import com.example.demo.src.user.model.PostReq.PostStoreReq;
+import com.example.demo.src.user.model.PostReq.PostUserReq;
+import com.example.demo.src.user.model.PostRes.PostBasketRes;
+import com.example.demo.src.user.model.PostRes.PostCategoryRes;
+import com.example.demo.src.user.model.PostRes.PostStoreRes;
+import com.example.demo.src.user.model.PostRes.PostUserRes;
+import com.example.demo.src.user.model.User.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.example.demo.config.BaseException;
 import com.example.demo.config.BaseResponse;
-import com.example.demo.src.user.model.*;
 import com.example.demo.utils.JwtService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
-
 
 import static com.example.demo.config.BaseResponseStatus.*;
 import static com.example.demo.utils.ValidationRegex.isRegexEmail;
@@ -52,6 +60,61 @@ public class UserController {
 
     // ******************************************************************************
 
+
+    /**
+     *  사용자의 주문내역 조회 API
+     *  [GET] /users/orders
+     */
+
+    @ResponseBody
+    @GetMapping("/orders/{page}")
+    public BaseResponse<List<GetOrderRes>> getOrders(@PathVariable("page") int page) {
+        try{
+            List<GetOrderRes> getOrderRes = userProvider.getOrders(page);
+            return new BaseResponse<>(getOrderRes);
+
+        } catch (BaseException exception) {
+            return new BaseResponse<>((exception.getStatus()));
+        }
+    }
+
+    /**
+     *  쿠폰 정보 조회 API
+     */
+
+    @ResponseBody
+    @GetMapping("/coupon/{userIdx}") // (GET) 127.0.0.1:9000/app/users/:userIdx
+    public BaseResponse<GetCouponRes> getUser2(@PathVariable("userIdx") int userIdx) {
+        // @PathVariable RESTful(URL)에서 명시된 파라미터({})를 받는 어노테이션, 이 경우 userId값을 받아옴.
+        //  null값 or 공백값이 들어가는 경우는 적용하지 말 것
+        //  .(dot)이 포함된 경우, .을 포함한 그 뒤가 잘려서 들어감
+        // Get Users
+        try {
+            GetCouponRes getUserRes = userProvider.getCoupon(userIdx);
+            return new BaseResponse<>(getUserRes);
+        } catch (BaseException exception) {
+            return new BaseResponse<>((exception.getStatus()));
+        }
+
+    }
+
+    /**
+     * 회원 1명 조회 API
+     * [GET] /users/:userIdx
+     */
+
+    @ResponseBody
+    @GetMapping("/{userIdx}")
+    public BaseResponse<GetUserRes> getUser(@PathVariable("userIdx") int userIdx) {
+        try {
+            GetUserRes getUserRes = userProvider.getUser(userIdx);
+            return new BaseResponse<>(getUserRes);
+        } catch (BaseException exception) {
+            return new BaseResponse<>((exception.getStatus()));
+        }
+
+    }
+
     /**
      * 회원가입 API
      * [POST] /users
@@ -90,25 +153,6 @@ public class UserController {
         }
     }
 
-    /**
-     * 로그인 API
-     * [POST] /users/logIn
-     */
-    @ResponseBody
-    @PostMapping("/log-in")
-    public BaseResponse<PostLoginRes> logIn(@RequestBody PostLoginReq postLoginReq) {
-        try {
-
-            // TODO: 로그인 값들에 대한 형식적인 validatin 처리해주셔야합니다!
-            // TODO: 유저의 status ex) 비활성화된 유저, 탈퇴한 유저 등을 관리해주고 있다면 해당 부분에 대한 validation 처리도 해주셔야합니다.
-
-
-            PostLoginRes postLoginRes = userProvider.logIn(postLoginReq);
-            return new BaseResponse<>(postLoginRes);
-        } catch (BaseException exception) {
-            return new BaseResponse<>(exception.getStatus());
-        }
-    }
 
 
     /**
@@ -147,27 +191,6 @@ public class UserController {
 
 
     /**
-     * 회원 1명 조회 API
-     * [GET] /users/:userIdx
-     */
-    // Path-variable
-    @ResponseBody
-    @GetMapping("/{userIdx}") // (GET) 127.0.0.1:9000/app/users/:userIdx
-    public BaseResponse<GetUserRes> getUser(@PathVariable("userIdx") int userIdx) {
-        // @PathVariable RESTful(URL)에서 명시된 파라미터({})를 받는 어노테이션, 이 경우 userId값을 받아옴.
-        //  null값 or 공백값이 들어가는 경우는 적용하지 말 것
-        //  .(dot)이 포함된 경우, .을 포함한 그 뒤가 잘려서 들어감
-        // Get Users
-        try {
-            GetUserRes getUserRes = userProvider.getUser(userIdx);
-            return new BaseResponse<>(getUserRes);
-        } catch (BaseException exception) {
-            return new BaseResponse<>((exception.getStatus()));
-        }
-
-    }
-
-    /**
      * 유저정보변경 API
      * [PATCH] /users/:userIdx
      */
@@ -175,8 +198,8 @@ public class UserController {
     @PatchMapping("/{userIdx}")
     public BaseResponse<String> modifyUserName(@PathVariable("userIdx") int userIdx, @RequestBody User user) {
         try {
-/**
-  *********** 해당 부분은 7주차 - JWT 수업 후 주석해체 해주세요!  ****************
+
+
             //jwt에서 idx 추출.
             int userIdxByJwt = jwtService.getUserIdx();
             //userIdx와 접근한 유저가 같은지 확인
@@ -184,8 +207,7 @@ public class UserController {
                 return new BaseResponse<>(INVALID_USER_JWT);
             }
             //같다면 유저네임 변경
-  **************************************************************************
- */
+
             PatchUserReq patchUserReq = new PatchUserReq(userIdx, user.getAddress());
             userService.modifyUserName(patchUserReq);
 
@@ -196,25 +218,6 @@ public class UserController {
         }
     }
 
-    /**
-     *  쿠폰 정보 조회 API
-     */
-
-    @ResponseBody
-    @GetMapping("/coupon/{userIdx}") // (GET) 127.0.0.1:9000/app/users/:userIdx
-    public BaseResponse<GetCouponRes> getUser2(@PathVariable("userIdx") int userIdx) {
-        // @PathVariable RESTful(URL)에서 명시된 파라미터({})를 받는 어노테이션, 이 경우 userId값을 받아옴.
-        //  null값 or 공백값이 들어가는 경우는 적용하지 말 것
-        //  .(dot)이 포함된 경우, .을 포함한 그 뒤가 잘려서 들어감
-        // Get Users
-        try {
-            GetCouponRes getUserRes = userProvider.getCoupon(userIdx);
-            return new BaseResponse<>(getUserRes);
-        } catch (BaseException exception) {
-            return new BaseResponse<>((exception.getStatus()));
-        }
-
-    }
 
     /**
      *  쿠폰 정보 조회 API
@@ -224,17 +227,14 @@ public class UserController {
     @PatchMapping("/coupon/{userIdx}")
     public BaseResponse<String> modifyCouponName(@PathVariable("userIdx") int userIdx, @RequestBody Coupon coupon) {
         try {
-/**
- *********** 해당 부분은 7주차 - JWT 수업 후 주석해체 해주세요!  ****************
- //jwt에서 idx 추출.
+
+
  int userIdxByJwt = jwtService.getUserIdx();
  //userIdx와 접근한 유저가 같은지 확인
  if(userIdx != userIdxByJwt){
  return new BaseResponse<>(INVALID_USER_JWT);
  }
- //같다면 유저네임 변경
- **************************************************************************
- */
+
             PatchCouponReq patchCouponReq = new PatchCouponReq(userIdx, coupon.getCouponInfo());
             userService.modifyCouponName(patchCouponReq);
 
@@ -297,17 +297,13 @@ public class UserController {
     @PatchMapping("/points/{userIdx}")
     public BaseResponse<String> modifyPointName(@PathVariable("userIdx") int userIdx, @RequestBody Point point) {
         try {
-/**
- *********** 해당 부분은 7주차 - JWT 수업 후 주석해체 해주세요!  ****************
- //jwt에서 idx 추출.
+
  int userIdxByJwt = jwtService.getUserIdx();
  //userIdx와 접근한 유저가 같은지 확인
  if(userIdx != userIdxByJwt){
  return new BaseResponse<>(INVALID_USER_JWT);
  }
- //같다면 유저네임 변경
- **************************************************************************
- */
+
             PatchPointReq patchPointReq = new PatchPointReq(userIdx, point.getPoint());
             userService.modifyPointName(patchPointReq);
 
@@ -317,5 +313,207 @@ public class UserController {
             return new BaseResponse<>((exception.getStatus()));
         }
     }
+
+    /**
+     * 모든 가게들의  정보 조회 API
+     * [GET] /users
+     *
+     * 또는
+     *
+     * 해당 닉네임을 같는 유저들의 정보 조회 API
+     * [GET] /users? NickName=
+     */
+    @ResponseBody
+    @GetMapping("/stores")
+    public BaseResponse<List<GetStoreRes>> getPoints() {
+        try{
+
+                List<GetStoreRes> getStoreRes = userProvider.getStores();
+                return new BaseResponse<>(getStoreRes);
+
+        } catch (BaseException exception) {
+            return new BaseResponse<>((exception.getStatus()));
+        }
+    }
+
+    @ResponseBody
+    @PostMapping("/stores")    // POST 방식의 요청을 매핑하기 위한 어노테이션
+    public BaseResponse<PostStoreRes> createUser(@RequestBody PostStoreReq postStoreReq) {
+
+        try {
+            PostStoreRes postStoreRes = userService.createStore(postStoreReq);
+            return new BaseResponse<>(postStoreRes);
+        } catch (BaseException exception) {
+            return new BaseResponse<>((exception.getStatus()));
+        }
+    }
+
+    /**
+     * 가게정보변경 API
+     * [PATCH] /users/:userIdx
+     */
+    @ResponseBody
+    @PatchMapping("/stores/{storeIdx}")
+    public BaseResponse<String> modifyStoreName(@PathVariable("storeIdx") int storeIdx, @RequestBody Store store) {
+        try {
+
+ //jwt에서 idx 추출.
+ int userIdxByJwt = jwtService.getStoreIdx();
+ //userIdx와 접근한 유저가 같은지 확인
+ if(storeIdx != userIdxByJwt){
+ return new BaseResponse<>(INVALID_USER_JWT);
+ }
+
+            PatchStoreReq patchStoreReq = new PatchStoreReq(storeIdx, store.getStoreName(), store.getMinimumOrder());
+            userService.modifyStoreName(patchStoreReq);
+
+            String result = "가게정보가 수정되었습니다.";
+            return new BaseResponse<>(result);
+        } catch (BaseException exception) {
+            return new BaseResponse<>((exception.getStatus()));
+        }
+    }
+
+    /**
+     *  가게 카테고리 조회 API
+     */
+    @ResponseBody
+    @GetMapping("/category") // (GET) 127.0.0.1:9000/app/users/:userIdx
+    public BaseResponse<List<GetCategoryRes>> getCategory() {
+        // @PathVariable RESTful(URL)에서 명시된 파라미터({})를 받는 어노테이션, 이 경우 userId값을 받아옴.
+        //  null값 or 공백값이 들어가는 경우는 적용하지 말 것
+        //  .(dot)이 포함된 경우, .을 포함한 그 뒤가 잘려서 들어감
+        // Get Users
+        try {
+            List<GetCategoryRes> getUserRes =  userProvider.getCategory();
+            return new BaseResponse<>(getUserRes);
+        } catch (BaseException exception) {
+            return new BaseResponse<>((exception.getStatus()));
+        }
+
+    }
+    @ResponseBody
+    @PostMapping("/category")    // POST 방식의 요청을 매핑하기 위한 어노테이션
+    public BaseResponse<PostBasketRes> createUser(@RequestBody PostBasketReq postBasketReq) {
+        //  @RequestBody란, 클라이언트가 전송하는 HTTP Request Body(우리는 JSON으로 통신하니, 이 경우 body는 JSON)를 자바 객체로 매핑시켜주는 어노테이션
+        // TODO: email 관련한 짧은 validation 예시입니다. 그 외 더 부가적으로 추가해주세요!
+        // email에 값이 존재하는지, 빈 값으로 요청하지는 않았는지 검사합니다. 빈값으로 요청했다면 에러 메시지를 보냅니다.
+
+        try {
+            PostBasketRes postBasketRes = userService.createBasket(postBasketReq);
+            return new BaseResponse<>(postBasketRes);
+        } catch (BaseException exception) {
+            return new BaseResponse<>((exception.getStatus()));
+        }
+    }
+    /**
+     * 유저정보변경 API
+     * [PATCH] /users/:userIdx
+     */
+    @ResponseBody
+    @PatchMapping("/category/{categoryIdx}")
+    public BaseResponse<String> modifyCategoryName(@PathVariable("categoryIdx") int categoryIdx, @RequestBody Category user) {
+        try {
+
+ int userIdxByJwt = jwtService.getCategoryIdx();
+ //userIdx와 접근한 유저가 같은지 확인
+ if(categoryIdx != userIdxByJwt){
+ return new BaseResponse<>(INVALID_USER_JWT);
+ }
+
+            PatchCategoryReq patchUserReq = new PatchCategoryReq(categoryIdx, user.getCategoryName());
+            userService.modifyCategoryName(patchUserReq);
+
+            String result = "회원정보가 수정되었습니다.";
+            return new BaseResponse<>(result);
+        } catch (BaseException exception) {
+            return new BaseResponse<>((exception.getStatus()));
+        }
+    }
+
+    /**
+     * 회원 1명 조회 API
+     * [GET] /users/:userIdx
+     */
+    // Path-variable
+    @ResponseBody
+    @GetMapping("/stores/{storeIdx}") // (GET) 127.0.0.1:9000/app/users/:userIdx
+    public BaseResponse<GetStoreRes> getStore(@PathVariable("storeIdx") int storeIdx) {
+        // @PathVariable RESTful(URL)에서 명시된 파라미터({})를 받는 어노테이션, 이 경우 userId값을 받아옴.
+        //  null값 or 공백값이 들어가는 경우는 적용하지 말 것
+        //  .(dot)이 포함된 경우, .을 포함한 그 뒤가 잘려서 들어감
+        // Get Users
+        try {
+            GetStoreRes getStoreRes = userProvider.getStore(storeIdx);
+            return new BaseResponse<>(getStoreRes);
+        } catch (BaseException exception) {
+            return new BaseResponse<>((exception.getStatus()));
+        }
+
+    }
+
+    /**
+     *  유저 장바구니 정보 조회 API
+     */
+    @ResponseBody
+    @GetMapping("/basket/{basketIdx}") // (GET) 127.0.0.1:9000/app/users/:userIdx
+    public BaseResponse<GetBasketRes> getBasket(@PathVariable("basketIdx") int basketIdx) {
+        // @PathVariable RESTful(URL)에서 명시된 파라미터({})를 받는 어노테이션, 이 경우 userId값을 받아옴.
+        //  null값 or 공백값이 들어가는 경우는 적용하지 말 것
+        //  .(dot)이 포함된 경우, .을 포함한 그 뒤가 잘려서 들어감
+        // Get Users
+        try {
+            GetBasketRes getBasketRes = userProvider.getBasket(basketIdx);
+            return new BaseResponse<>(getBasketRes);
+        } catch (BaseException exception) {
+            return new BaseResponse<>((exception.getStatus()));
+        }
+
+    }
+
+    /**
+     * 회원가입 API
+     * [POST] /users
+     */
+    // Body
+    @ResponseBody
+    @PostMapping("/basket")    // POST 방식의 요청을 매핑하기 위한 어노테이션
+    public BaseResponse<PostCategoryRes> createUser(@RequestBody PostCategoryReq postCategoryReq) {
+
+        try {
+            PostCategoryRes postCategoryRes = userService.createCategory(postCategoryReq);
+            return new BaseResponse<>(postCategoryRes);
+        } catch (BaseException exception) {
+            return new BaseResponse<>((exception.getStatus()));
+        }
+    }
+
+    /**
+     * 유저정보변경 API
+     * [PATCH] /users/:userIdx
+     */
+    @ResponseBody
+    @PatchMapping("/basket/{basketIdx}")
+    public BaseResponse<String> modifyBasketName(@PathVariable("basketIdx") int basketIdx, @RequestBody Basket user) {
+        try {
+
+        //jwt에서 idx 추출.
+            int userIdxByJwt = jwtService.getBasketIdx();
+            //userIdx와 접근한 유저가 같은지 확인
+            if(basketIdx != userIdxByJwt){
+            return new BaseResponse<>(INVALID_USER_JWT);
+            }
+
+            PatchBasketReq patchUserReq = new PatchBasketReq(basketIdx, user.getMenuInfo(), user.getMenuPrice(), user.getTotalPrice());
+            userService.modifyBasketName(patchUserReq);
+
+            String result = "장바구니정보가 수정되었습니다.";
+            return new BaseResponse<>(result);
+         } catch (BaseException exception) {
+            return new BaseResponse<>((exception.getStatus()));
+            }
+    }
+
+
 
 }

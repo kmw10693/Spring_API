@@ -1,12 +1,19 @@
 package com.example.demo.src.user;
 
 
-import com.example.demo.src.user.model.*;
+import com.example.demo.src.user.model.GetRes.*;
+import com.example.demo.src.user.model.PatchReq.*;
+import com.example.demo.src.user.model.PostReq.*;
+import com.example.demo.src.user.model.User.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.List;
 
 @Repository //  [Persistence Layer에서 DAO를 명시하기 위해 사용]
@@ -20,9 +27,38 @@ public class UserDao {
 
     // *********************** 동작에 있어 필요한 요소들을 불러옵니다. *************************
 
+    Connection con;
+    PreparedStatement pstmt;
+    ResultSet rs;
+
     private JdbcTemplate jdbcTemplate;
 
     @Autowired //readme 참고
+
+    /*public int getListCount(){
+        int count =0;
+
+        try{
+            pstmt = con.prepareStatement("select count(*) from OrderList");
+
+            rs = pstmt.executeQuery();
+
+            if(rs.next()){
+                count = rs.getInt(1);
+            }
+        }catch(Exception ex){
+            System.out.println("getListCount 에러 : " + ex);
+        }finally{
+            if(rs!=null)try{rs.close();}catch(SQLException ex){}
+            if(pstmt!=null)try{pstmt.close();}catch(SQLException ex){}
+        }
+
+        return count;
+    }
+
+     */
+
+
     public void setDataSource(DataSource dataSource) {
         this.jdbcTemplate = new JdbcTemplate(dataSource);
     }
@@ -66,6 +102,39 @@ public class UserDao {
         return this.jdbcTemplate.queryForObject(lastInserIdQuery, int.class); // 해당 쿼리문의 결과 마지막으로 삽인된 유저의 userIdx번호를 반환한다.
     }
 
+    public int createStore(PostStoreReq postStoreReq) {
+        String createUserQuery = "insert into Store (categoryIdx, storeName, storeScore, minimumOrder, storeUrl ) VALUES (?,?,?,?,?)"; // 실행될 동적 쿼리문
+        Object[] createUserParams = new Object[]{postStoreReq.getCategoryIdx(),postStoreReq.getStoreName(), postStoreReq.getStoreScore(), postStoreReq.getMinimumOrder(),postStoreReq.getStoreUrl()}; // 동적 쿼리의 ?부분에 주입될 값
+        this.jdbcTemplate.update(createUserQuery, createUserParams);
+        // email -> postUserReq.getEmail(), password -> postUserReq.getPassword(), nickname -> postUserReq.getNickname() 로 매핑(대응)시킨다음 쿼리문을 실행한다.
+        // 즉 DB의 User Table에 (email, password, nickname)값을 가지는 유저 데이터를 삽입(생성)한다.
+
+        String lastInserIdQuery = "select last_insert_id()"; // 가장 마지막에 삽입된(생성된) id값은 가져온다.
+        return this.jdbcTemplate.queryForObject(lastInserIdQuery, int.class); // 해당 쿼리문의 결과 마지막으로 삽인된 유저의 userIdx번호를 반환한다.
+    }
+
+    public int createBasket(PostBasketReq postStoreReq) {
+        String createUserQuery = "insert into Basket (basketIdx, userIdx, menuInfo, menuPrice, totalPrice) VALUES (?,?,?,?,?)"; // 실행될 동적 쿼리문
+        Object[] createUserParams = new Object[]{postStoreReq.getBasketIdx(),postStoreReq.getUserIdx(), postStoreReq.getMenuInfo(), postStoreReq.getMenuPrice(),postStoreReq.getTotalPrice()}; // 동적 쿼리의 ?부분에 주입될 값
+        this.jdbcTemplate.update(createUserQuery, createUserParams);
+        // email -> postUserReq.getEmail(), password -> postUserReq.getPassword(), nickname -> postUserReq.getNickname() 로 매핑(대응)시킨다음 쿼리문을 실행한다.
+        // 즉 DB의 User Table에 (email, password, nickname)값을 가지는 유저 데이터를 삽입(생성)한다.
+
+        String lastInserIdQuery = "select last_insert_id()"; // 가장 마지막에 삽입된(생성된) id값은 가져온다.
+        return this.jdbcTemplate.queryForObject(lastInserIdQuery, int.class); // 해당 쿼리문의 결과 마지막으로 삽인된 유저의 userIdx번호를 반환한다.
+    }
+
+    public int createCategory(PostCategoryReq postStoreReq) {
+        String createUserQuery = "insert into Category (categoryName, categoryUrl, discountUrl) VALUES (?,?,?)"; // 실행될 동적 쿼리문
+        Object[] createUserParams = new Object[]{postStoreReq.getCategoryName(),postStoreReq.getCategoryUrl(), postStoreReq.getDiscountUrl()}; // 동적 쿼리의 ?부분에 주입될 값
+        this.jdbcTemplate.update(createUserQuery, createUserParams);
+        // email -> postUserReq.getEmail(), password -> postUserReq.getPassword(), nickname -> postUserReq.getNickname() 로 매핑(대응)시킨다음 쿼리문을 실행한다.
+        // 즉 DB의 User Table에 (email, password, nickname)값을 가지는 유저 데이터를 삽입(생성)한다.
+
+        String lastInserIdQuery = "select last_insert_id()"; // 가장 마지막에 삽입된(생성된) id값은 가져온다.
+        return this.jdbcTemplate.queryForObject(lastInserIdQuery, int.class); // 해당 쿼리문의 결과 마지막으로 삽인된 유저의 userIdx번호를 반환한다.
+    }
+
     // 이메일 확인
     public int checkEmail(String email) {
         String checkEmailQuery = "select exists(select email from User where email = ?)"; // User Table에 해당 email 값을 갖는 유저 정보가 존재하는가?
@@ -78,10 +147,36 @@ public class UserDao {
     // 회원정보 변경
     public int modifyUserName(PatchUserReq patchUserReq) {
         String modifyUserNameQuery = "update User set address = ? where userIdx = ? "; // 해당 userIdx를 만족하는 User를 해당 nickname으로 변경한다.
-        Object[] modifyUserNameParams = new Object[]{patchUserReq.getAddress(), patchUserReq.getUserIdx()}; // 주입될 값들(nickname, userIdx) 순
+        Object[] modifyUserNameParams = new Object[]{patchUserReq.getAddress(),  patchUserReq.getUserIdx()}; // 주입될 값들(nickname, userIdx) 순
 
         return this.jdbcTemplate.update(modifyUserNameQuery, modifyUserNameParams); // 대응시켜 매핑시켜 쿼리 요청(생성했으면 1, 실패했으면 0) 
     }
+
+    // 가게정보 변경
+    public int modifyStoreName(PatchStoreReq patchUserReq) {
+        String modifyUserNameQuery = "update User set storeName = ?, minimumOrder = ? where storeIdx = ?"; // 해당 userIdx를 만족하는 User를 해당 nickname으로 변경한다.
+        Object[] modifyUserNameParams = new Object[]{patchUserReq.getStoreName(), patchUserReq.getMinimumOrder(), patchUserReq.getStoreIdx()}; // 주입될 값들(nickname, userIdx) 순
+
+        return this.jdbcTemplate.update(modifyUserNameQuery, modifyUserNameParams); // 대응시켜 매핑시켜 쿼리 요청(생성했으면 1, 실패했으면 0)
+    }
+
+    // 카테고리 변경
+    public int modifyCategoryName(PatchCategoryReq patchUserReq) {
+        String modifyUserNameQuery = "update Category set categoryName = ? where categoryIdx = ?"; // 해당 userIdx를 만족하는 User를 해당 nickname으로 변경한다.
+        Object[] modifyUserNameParams = new Object[]{patchUserReq.getCategoryName(), patchUserReq.getCategoryIdx()}; // 주입될 값들(nickname, userIdx) 순
+
+        return this.jdbcTemplate.update(modifyUserNameQuery, modifyUserNameParams); // 대응시켜 매핑시켜 쿼리 요청(생성했으면 1, 실패했으면 0)
+    }
+
+    // 카테고리 변경
+    public int modifyBasketName(PatchBasketReq patchUserReq) {
+        String modifyUserNameQuery = "update Basket set menuInfo = ?, menuPrice =?, totalPrice=? where BasketIdx = ?"; // 해당 userIdx를 만족하는 User를 해당 nickname으로 변경한다.
+        Object[] modifyUserNameParams = new Object[]{patchUserReq.getMenuInfo(), patchUserReq.getMenuPrice(), patchUserReq.getTotalPrice(), patchUserReq.getBasketIdx()}; // 주입될 값들(nickname, userIdx) 순
+
+        return this.jdbcTemplate.update(modifyUserNameQuery, modifyUserNameParams); // 대응시켜 매핑시켜 쿼리 요청(생성했으면 1, 실패했으면 0)
+    }
+
+
 
 
     // 로그인: 해당 email에 해당되는 user의 암호화된 비밀번호 값을 가져온다.
@@ -138,9 +233,12 @@ public class UserDao {
         ); // 복수개의 회원정보들을 얻기 위해 jdbcTemplate 함수(Query, 객체 매핑 정보)의 결과 반환(동적쿼리가 아니므로 Parmas부분이 없음)
     }
 
+
+
+
     // 해당 nickname을 갖는 유저들의 정보 조회
     public List<GetUserRes> getUsersByNickname(String name) {
-        String getUsersByNicknameQuery = "select * from User where name =?"; // 해당 이메일을 만족하는 유저를 조회하는 쿼리문
+        String getUsersByNicknameQuery = "select * from User where name =? limit 10 offset 0"; // 해당 이메일을 만족하는 유저를 조회하는 쿼리문
         String getUsersByNicknameParams = name;
         return this.jdbcTemplate.query(getUsersByNicknameQuery,
                 (rs, rowNum) -> new GetUserRes(
@@ -176,6 +274,8 @@ public class UserDao {
                 getUserParams); // 한 개의 회원정보를 얻기 위한 jdbcTemplate 함수(Query, 객체 매핑 정보, Params)의 결과 반환
     }
 
+
+
     // 해당 UserIdx를 갖는 쿠폰 정보 조회
     public GetCouponRes getCoupon(int userIdx) {
         String getUserQuery = "select * from Coupon where userIdx = ?"; // 해당 userIdx를 만족하는 유저를 조회하는 쿼리문
@@ -209,10 +309,83 @@ public class UserDao {
                         rs.getInt("useDate"),
                         rs.getString("usePlace"),
                         rs.getInt("pointSave")),
+
                 getUserParams); // 한 개의 회원정보를 얻기 위한 jdbcTemplate 함수(Query, 객체 매핑 정보, Params)의 결과 반환
     }
 
-    // User 테이블에 존재하는 전체 유저들의 포인트 정보 조회
+
+    public List<GetOrderRes> getOrders(int page) {
+
+        int count = jdbcTemplate.queryForObject("select count(*) from OrderList", Integer.class);
+        String getUsersQuery = "select * from OrderList limit " + page*13 + " offset " + 13*(page-1);
+
+        return this.jdbcTemplate.query(getUsersQuery,
+                (rs, rowNum) -> new GetOrderRes(
+                        rs.getInt("orderIdx"),
+                        rs.getString("storeName"),
+                        rs.getString("menu"),
+                        rs.getInt("menuNum"),
+                        rs.getString("orderDate"),
+                        rs.getInt("price"),
+                        rs.getInt("deliveryTip"),
+                        rs.getInt("amount"),
+                        rs.getString("payMethod"),
+                        rs.getString("address"),
+                        rs.getString("phoneNum"),
+                        rs.getString("ownReq"),
+                        rs.getString("riderReq"),
+                        rs.getString("orderNum"),
+                        rs.getString("deliCom"))
+                );
+
+    }
+
+    // 해당 UserIdx를 갖는 포인트 정보 조회
+    public GetStoreRes getStore(int storeIdx) {
+        String getUserQuery = "select * from Store where storeIdx = ?"; // 해당 userIdx를 만족하는 유저를 조회하는 쿼리문
+        int getUserParams = storeIdx;
+        return this.jdbcTemplate.queryForObject(getUserQuery,
+                (rs, rowNum) -> new GetStoreRes(
+                        rs.getInt("storeIdx"),
+                        rs.getInt("categoryIdx"),
+                        rs.getString("storeName"),
+                        rs.getFloat("storeScore"),
+                        rs.getString("storeInfo"),
+                        rs.getInt("minimumOrder"),
+                        rs.getInt("deliveryTip")),
+                getUserParams); // 한 개의 회원정보를 얻기 위한 jdbcTemplate 함수(Query, 객체 매핑 정보, Params)의 결과 반환
+    }
+
+    // StoreRes에 정보 저장하는 API
+    public List<GetStoreRes> getStore() {
+        String getUsersQuery = "select * from Store"; //User 테이블에 존재하는 모든 회원들의 정보를 조회하는 쿼리
+        return this.jdbcTemplate.query(getUsersQuery,
+                (rs, rowNum) -> new GetStoreRes(
+                        rs.getInt("storeIdx"),
+                        rs.getInt("categoryIdx"),
+                        rs.getString("storeName"),
+                        rs.getFloat("storeScore"),
+                        rs.getString("storeInfo"),
+                        rs.getInt("minimumOrder"),
+                        rs.getInt("deliveryTip"))
+                // RowMapper(위의 링크 참조): 원하는 결과값 형태로 받기
+        ); // 복수개의 회원정보들을 얻기 위해 jdbcTemplate 함수(Query, 객체 매핑 정보)의 결과 반환(동적쿼리가 아니므로 Parmas부분이 없음)
+    }
+
+
+    public GetBasketRes getBasket(int basketIdx) {
+        String getUserQuery = "select * from Basket where basketIdx = ?"; // 해당 userIdx를 만족하는 유저를 조회하는 쿼리문
+        int getUserParams = basketIdx;
+        return this.jdbcTemplate.queryForObject(getUserQuery,
+                (rs, rowNum) -> new GetBasketRes(
+                        rs.getInt("basketIdx"),
+                        rs.getInt("userIdx"),
+                        rs.getString("menuInfo"),
+                        rs.getInt("menuPrice"),
+                        rs.getInt("totalPrice")),
+                getUserParams); // 한 개의 회원정보를 얻기 위한 jdbcTemplate 함수(Query, 객체 매핑 정보, Params)의 결과 반환
+    }
+
     public List<GetPointRes> getPoints() {
         String getUsersQuery = "select * from Point"; //User 테이블에 존재하는 모든 회원들의 정보를 조회하는 쿼리
         return this.jdbcTemplate.query(getUsersQuery,
@@ -223,7 +396,19 @@ public class UserDao {
                         rs.getInt("useDate"),
                         rs.getString("usePlace"),
                         rs.getInt("pointSave"))
-                       // RowMapper(위의 링크 참조): 원하는 결과값 형태로 받기
+                // RowMapper(위의 링크 참조): 원하는 결과값 형태로 받기
+        ); // 복수개의 회원정보들을 얻기 위해 jdbcTemplate 함수(Query, 객체 매핑 정보)의 결과 반환(동적쿼리가 아니므로 Parmas부분이 없음)
+    }
+    public List<GetCategoryRes> getCategory() {
+        String getUsersQuery = "select * from Category"; //User 테이블에 존재하는 모든 회원들의 정보를 조회하는 쿼리
+        return this.jdbcTemplate.query(getUsersQuery,
+                (rs, rowNum) -> new GetCategoryRes(
+                        rs.getInt("categoryIdx"),
+                        rs.getString("categoryName"),
+                        rs.getString("categoryUrl"),
+                        rs.getString("discounturl"),
+                        rs.getString("status"))
+                // RowMapper(위의 링크 참조): 원하는 결과값 형태로 받기
         ); // 복수개의 회원정보들을 얻기 위해 jdbcTemplate 함수(Query, 객체 매핑 정보)의 결과 반환(동적쿼리가 아니므로 Parmas부분이 없음)
     }
     public List<GetPointRes> getPointsByNickname(String usePlace) {

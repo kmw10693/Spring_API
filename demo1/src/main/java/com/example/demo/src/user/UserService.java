@@ -3,15 +3,22 @@ package com.example.demo.src.user;
 
 import com.example.demo.config.BaseException;
 import com.example.demo.config.secret.Secret;
-import com.example.demo.src.user.model.*;
+import com.example.demo.src.user.model.PatchReq.*;
+import com.example.demo.src.user.model.PostReq.PostBasketReq;
+import com.example.demo.src.user.model.PostReq.PostCategoryReq;
+import com.example.demo.src.user.model.PostReq.PostStoreReq;
+import com.example.demo.src.user.model.PostReq.PostUserReq;
+import com.example.demo.src.user.model.PostRes.PostBasketRes;
+import com.example.demo.src.user.model.PostRes.PostCategoryRes;
+import com.example.demo.src.user.model.PostRes.PostStoreRes;
+import com.example.demo.src.user.model.PostRes.PostUserRes;
 import com.example.demo.utils.AES128;
 import com.example.demo.utils.JwtService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.jdbc.core.JdbcTemplate;
-import javax.sql.DataSource;
+
 import static com.example.demo.config.BaseResponseStatus.*;
 
 /**
@@ -56,13 +63,12 @@ public class UserService {
         }
         try {
             int userIdx = userDao.createUser(postUserReq);
-            return new PostUserRes(userIdx);
+            //return new PostUserRes(userIdx);
 
-//  *********** 해당 부분은 7주차 수업 후 주석해제하서 대체해서 사용해주세요! ***********
-//            //jwt 발급.
-//            String jwt = jwtService.createJwt(userIdx);
-//            return new PostUserRes(jwt,userIdx);
-//  *********************************************************************
+
+           String jwt = jwtService.createJwt(userIdx);
+           return new PostUserRes(userIdx, jwt);
+
         } catch (Exception exception) { // DB에 이상이 있는 경우 에러 메시지를 보냅니다.
             throw new BaseException(DATABASE_ERROR);
         }
@@ -79,11 +85,44 @@ public class UserService {
             throw new BaseException(DATABASE_ERROR);
         }
     }
+    // 가게정보 수정(Patch)
+    public void modifyStoreName(PatchStoreReq patchStoreReq) throws BaseException {
+        try {
+            int result = userDao.modifyStoreName(patchStoreReq); // 해당 과정이 무사히 수행되면 True(1), 그렇지 않으면 False(0)입니다.
+            if (result == 0) { // result값이 0이면 과정이 실패한 것이므로 에러 메서지를 보냅니다.
+            }
+        } catch (Exception exception) { // DB에 이상이 있는 경우 에러 메시지를 보냅니다.
+        }
+    }
 
     // 쿠폰정보 수정(Patch)
     public void modifyCouponName(PatchCouponReq patchCouponReq) throws BaseException {
         try {
             int result = userDao.modifyCouponName(patchCouponReq); // 해당 과정이 무사히 수행되면 True(1), 그렇지 않으면 False(0)입니다.
+            if (result == 0) { // result값이 0이면 과정이 실패한 것이므로 에러 메서지를 보냅니다.
+
+            }
+        } catch (Exception exception) { // DB에 이상이 있는 경우 에러 메시지를 보냅니다.
+
+        }
+    }
+
+    // 카테고리 수정(Patch)
+    public void modifyCategoryName(PatchCategoryReq patchCategoryReq) throws BaseException {
+        try {
+            int result = userDao.modifyCategoryName(patchCategoryReq); // 해당 과정이 무사히 수행되면 True(1), 그렇지 않으면 False(0)입니다.
+            if (result == 0) { // result값이 0이면 과정이 실패한 것이므로 에러 메서지를 보냅니다.
+
+            }
+        } catch (Exception exception) { // DB에 이상이 있는 경우 에러 메시지를 보냅니다.
+
+        }
+    }
+
+    // 카테고리 수정(Patch)
+    public void modifyBasketName(PatchBasketReq patchCategoryReq) throws BaseException {
+        try {
+            int result = userDao.modifyBasketName(patchCategoryReq); // 해당 과정이 무사히 수행되면 True(1), 그렇지 않으면 False(0)입니다.
             if (result == 0) { // result값이 0이면 과정이 실패한 것이므로 에러 메서지를 보냅니다.
 
             }
@@ -101,5 +140,51 @@ public class UserService {
         } catch (Exception exception) { // DB에 이상이 있는 경우 에러 메시지를 보냅니다.
         }
     }
+
+    public PostStoreRes createStore(PostStoreReq postStoreReq) throws BaseException {
+        // 중복 확인: 해당 이메일을 가진 유저가 있는지 확인합니다. 중복될 경우, 에러 메시지를 보냅니다.
+        try {
+            int userIdx = userDao.createStore(postStoreReq);
+
+
+            String jwt = jwtService.createJwt(userIdx);
+            return new PostStoreRes(userIdx, jwt);
+//  *********************************************************************
+        } catch (Exception exception) { // DB에 이상이 있는 경우 에러 메시지를 보냅니다.
+            throw new BaseException(DATABASE_ERROR);
+        }
+    }
+
+    public PostBasketRes createBasket(PostBasketReq postBasketReq) throws BaseException {
+        // 중복 확인: 해당 이메일을 가진 유저가 있는지 확인합니다. 중복될 경우, 에러 메시지를 보냅니다.
+        try {
+            int userIdx = userDao.createBasket(postBasketReq);
+
+//  *********** 해당 부분은 7주차 수업 후 주석해제하서 대체해서 사용해주세요! ***********
+//            //jwt 발급.
+            String jwt = jwtService.createJwt(userIdx);
+            return new PostBasketRes(userIdx, jwt);
+//  *********************************************************************
+        } catch (Exception exception) { // DB에 이상이 있는 경우 에러 메시지를 보냅니다.
+            throw new BaseException(DATABASE_ERROR);
+        }
+    }
+
+    public PostCategoryRes createCategory(PostCategoryReq postCategoryReq) throws BaseException {
+        // 중복 확인: 해당 이메일을 가진 유저가 있는지 확인합니다. 중복될 경우, 에러 메시지를 보냅니다.
+        try {
+            int userIdx = userDao.createCategory(postCategoryReq);
+
+
+//  *********** 해당 부분은 7주차 수업 후 주석해제하서 대체해서 사용해주세요! ***********
+//            //jwt 발급.
+            String jwt = jwtService.createJwt(userIdx);
+            return new PostCategoryRes(userIdx, jwt);
+//  *********************************************************************
+        } catch (Exception exception) { // DB에 이상이 있는 경우 에러 메시지를 보냅니다.
+            throw new BaseException(DATABASE_ERROR);
+        }
+    }
+
 
 }
